@@ -4,6 +4,7 @@ using MVC.Models.Crypto;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -22,56 +23,53 @@ namespace MVC.Managers
         public IEnumerable<CurrencyModel> GetCurrencies()
         {
             var helper = new Helper();
-            var cryptoData = helper.DeserializeObject<CryptoData>(CallAPI());
+            var cryptoData = helper.DeserializeObject<Crypto>(CallAPI());
             List<CurrencyModel> currencyModels = new List<CurrencyModel>();
 
-            var currencyModel = new CurrencyModel
+            foreach (var crypto in cryptoData.Data)
             {
-                Price = cryptoData.Data.BTC.Quote.USD.Price,
-                Name = cryptoData.Data.BTC.Name
-            };
-
-            currencyModels.Add(currencyModel);
-
-            var currencyModel1 = new CurrencyModel
-            {
-                Price = cryptoData.Data.VET.Quote.USD.Price,
-                Name = cryptoData.Data.VET.Name
-            };
-
-            currencyModels.Add(currencyModel1);
+                currencyModels.Add(SelectFiat(crypto));
+            }
 
             return currencyModels;
         }
 
-        private string CallAPI() {
-            var query = new QueryParameters
+        private CurrencyModel SelectFiat(Data crypto) {
+            if (crypto.Quote.USD != null)
             {
-                Crypto = new List<string> { "BTC", "VET" },
-                Currency = new List<string> { "USD" }
-            };
+                return new CurrencyModel
+                {
+                    Rank = crypto.Cmc_Rank,
+                    Name = crypto.Name,
+                    Symbol = crypto.Quote.USD.Symbol,
+                    MarketCap = crypto.Quote.USD.Market_Cap.ToString("C", new CultureInfo("en-US")),
+                    Price = crypto.Quote.USD.Price.ToString("C", new CultureInfo("en-US"))
+                };
+            }
 
-            var URL = new UriBuilder("https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest");
+            if (crypto.Quote.GBP != null)
+            {
+                return new CurrencyModel
+                {
+                    Rank = crypto.Cmc_Rank,
+                    Name = crypto.Name,
+                    Symbol = crypto.Quote.GBP.Symbol,
+                    MarketCap = crypto.Quote.GBP.Market_Cap.ToString("C", new CultureInfo("en-GB")),
+                    Price = crypto.Quote.GBP.Price.ToString("C", new CultureInfo("en-GB"))
+                };
+            }
+
+            return null;
+        }
+        private string CallAPI() {
+            string API_KEY = "dae93059-c7e8-4211-81bd-b65fb32df1ad";
+
+            var URL = new UriBuilder("https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest");
 
             var queryString = HttpUtility.ParseQueryString(string.Empty);
-
-            string cryptoQuery = "";
-            string currencyQuery = "";
-            foreach (var crypto in query.Crypto)
-            {
-                cryptoQuery += crypto + ",";
-            }
-
-            foreach (var currency in query.Currency)
-            {
-                currencyQuery += currency + ",";
-            }
-
-            cryptoQuery = cryptoQuery.TrimEnd(',');
-            currencyQuery = currencyQuery.TrimEnd(',');
-
-            queryString["symbol"] = cryptoQuery;
-            queryString["convert"] = currencyQuery;
+            queryString["start"] = "1";
+            queryString["limit"] = "100";
+            queryString["convert"] = "USD";
 
             URL.Query = queryString.ToString();
 
@@ -80,14 +78,5 @@ namespace MVC.Managers
             client.Headers.Add("Accepts", "application/json");
             return client.DownloadString(URL.ToString());
         }
-
-        public class QueryParameters
-        {
-            public IList Crypto { get; set; }
-            public IList Currency { get; set; }
-            public IList APIKey { get; set; }
-        }
-
-
     }
 }

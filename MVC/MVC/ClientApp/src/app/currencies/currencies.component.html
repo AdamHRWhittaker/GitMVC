@@ -3,14 +3,21 @@
 <table class='table table-dark' aria-labelledby="tableLabel" *ngIf="currencies">
   <thead>
     <tr>
+      <th>Rank</th>
       <th>Name</th>
+      <th>Market Cap</th>
       <th>Price</th>
     </tr>
   </thead>
   <tbody>
     <tr *ngFor="let currency of currencies">
+      <td>{{ currency.rank }}</td>
       <td>{{ currency.name }}</td>
+      <td>{{ currency.marketCap }}</td>
       <td>{{ currency.price }}</td>
     </tr>
   </tbody>
 </table>
+
+
+

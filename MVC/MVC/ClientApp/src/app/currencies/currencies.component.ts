@@ -19,6 +19,8 @@ export class CurrenciesComponent {
 }
 
 interface Currencies {
+  rank: number;
   name: string;
+  marketCap: string;
   price: number;
 }
