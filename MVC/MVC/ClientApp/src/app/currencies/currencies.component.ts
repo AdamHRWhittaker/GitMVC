@@ -23,4 +23,5 @@ interface Currencies {
   name: string;
   marketCap: string;
   price: number;
+  volume: number;
 }

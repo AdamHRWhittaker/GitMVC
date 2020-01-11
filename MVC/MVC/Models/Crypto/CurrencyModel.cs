@@ -12,5 +12,7 @@ namespace MVC.Models
         public string MarketCap { get; set; }
         public string Price { get; set; }
         public string Symbol { get; set; }
+
+        public string Volume { get; set; }
     }
 }

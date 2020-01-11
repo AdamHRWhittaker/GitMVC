@@ -21,5 +21,7 @@ namespace MVC.Models.Crypto
         public int Cmc_Rank { get; set; }
         public DateTime LastUpdated { get; set; }
         public Quote Quote { get; set; }
+
+        //where is volume?
     }
 }

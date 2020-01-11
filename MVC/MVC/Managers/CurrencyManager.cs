@@ -14,7 +14,6 @@ namespace MVC.Managers
 {
     public class CurrencyManager
     {
-        private readonly string API_KEY = "dae93059-c7e8-4211-81bd-b65fb32df1ad";
         public CurrencyManager()
         {
 
@@ -22,8 +21,7 @@ namespace MVC.Managers
 
         public IEnumerable<CurrencyModel> GetCurrencies()
         {
-            var helper = new Helper();
-            var cryptoData = helper.DeserializeObject<Crypto>(CallAPI());
+            var cryptoData = new Helper().DeserializeObject<Crypto>(CallAPI());
             List<CurrencyModel> currencyModels = new List<CurrencyModel>();
 
             foreach (var crypto in cryptoData.Data)
@@ -35,28 +33,23 @@ namespace MVC.Managers
         }
 
         private CurrencyModel SelectFiat(Data crypto) {
-            if (crypto.Quote.USD != null)
-            {
-                return new CurrencyModel
-                {
-                    Rank = crypto.Cmc_Rank,
-                    Name = crypto.Name,
-                    Symbol = crypto.Quote.USD.Symbol,
-                    MarketCap = crypto.Quote.USD.Market_Cap.ToString("C", new CultureInfo("en-US")),
-                    Price = crypto.Quote.USD.Price.ToString("C", new CultureInfo("en-US"))
-                };
-            }
 
-            if (crypto.Quote.GBP != null)
+            foreach (var prop in crypto.Quote.GetType().GetProperties())
             {
-                return new CurrencyModel
+                var fiat = prop.GetValue(crypto.Quote, null);
+                if (fiat != null)
                 {
-                    Rank = crypto.Cmc_Rank,
-                    Name = crypto.Name,
-                    Symbol = crypto.Quote.GBP.Symbol,
-                    MarketCap = crypto.Quote.GBP.Market_Cap.ToString("C", new CultureInfo("en-GB")),
-                    Price = crypto.Quote.GBP.Price.ToString("C", new CultureInfo("en-GB"))
-                };
+                    return new CurrencyModel
+                    {
+                        Rank = crypto.Cmc_Rank,
+                        Name = crypto.Name,
+                        MarketCap = string.Format("{0}{1:n}", fiat.GetType().GetProperty("Symbol").GetValue(fiat, null), fiat.GetType().GetProperty("Market_Cap").GetValue(fiat, null)),
+                        Price = string.Format("{0}{1:n}", fiat.GetType().GetProperty("Symbol").GetValue(fiat, null), fiat.GetType().GetProperty("Price").GetValue(fiat, null)),
+                        Volume = string.Format("{0}{1:n}", fiat.GetType().GetProperty("Symbol").GetValue(fiat, null), fiat.GetType().GetProperty("Volume_24h").GetValue(fiat, null)),
+                        //Circulating Supply(Slug) 
+                        //Change (24h) %
+                    };
+                }
             }
 
             return null;
